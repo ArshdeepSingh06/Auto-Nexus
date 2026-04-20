@@ -1,0 +1,14 @@
+body {
+    background-color: #0e1117;
+    color: white;
+}
+
+h1 {
+    color: #00c8ff;
+}
+
+.stButton>button {
+    background-color: #00c8ff;
+    color: black;
+    border-radius: 8px;
+}
