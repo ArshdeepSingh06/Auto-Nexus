@@ -20,3 +20,7 @@ class DBConnection:
     def fetch(self, query):
         self.cursor.execute(query)
         return self.cursor.fetchall()
+
+    def close(self):
+        self.cursor.close()
+        self.connection.close()

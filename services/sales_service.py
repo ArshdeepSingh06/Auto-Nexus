@@ -1,8 +1,6 @@
 from config.db_config import DBConnection
 
 class SalesService:
-    def __init__(self):
-        self.db = DBConnection()
 
     def calculate_tax(self, price):
         return price * 0.18  # 18% GST
@@ -15,16 +13,47 @@ class SalesService:
         return total / months
 
     def create_sale(self, vehicle_id, customer_id, price):
-        query = """
-        INSERT INTO sales (vehicle_id, customer_id, price)
-        VALUES (%s, %s, %s)
-        """
-        self.db.execute(query, (vehicle_id, customer_id, price))
+        db = DBConnection()
+        try:
+            query = """
+            INSERT INTO sales (vehicle_id, customer_id, price)
+            VALUES (%s, %s, %s)
+            """
+            db.execute(query, (vehicle_id, customer_id, price))
 
-        # Update vehicle status
-        update_query = "UPDATE vehicles SET status='Sold' WHERE id=%s"
-        self.db.execute(update_query, (vehicle_id,))
+            # Update vehicle status
+            update_query = "UPDATE vehicles SET status='Sold' WHERE id=%s"
+            db.execute(update_query, (vehicle_id,))
+
+        finally:
+            db.close()
 
     def get_sales_report(self):
-        query = "SELECT * FROM sales"
-        return self.db.fetch(query)
+        db = DBConnection()
+        try:
+            query = "SELECT * FROM sales"
+            return db.fetch(query)
+        finally:
+            db.close()
+
+    def get_sales_with_details(self):
+        db = DBConnection()
+        try:
+            query = """
+            SELECT s.id, c.name, v.brand, v.model, s.price, s.date
+            FROM sales s
+            JOIN customers c ON s.customer_id = c.id
+            JOIN vehicles v ON s.vehicle_id = v.id
+            ORDER BY s.date DESC
+            """
+            return db.fetch(query)
+        finally:
+            db.close()
+
+    def delete_sale(self, sale_id):
+        db = DBConnection()
+        try:
+            query = "DELETE FROM sales WHERE id = %s"
+            db.execute(query, (sale_id,))
+        finally:
+            db.close()
