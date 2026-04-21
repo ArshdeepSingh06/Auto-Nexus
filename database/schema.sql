@@ -36,3 +36,15 @@ CREATE TABLE services (
     status VARCHAR(20),
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE,
+    password VARCHAR(255),
+    role VARCHAR(20)
+);
+
+INSERT INTO users (username, password, role) VALUES
+('admin', 'admin123', 'Admin'),
+('sales', 'sales123', 'Sales'),
+('tech', 'tech123', 'Technician');
