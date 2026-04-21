@@ -17,8 +17,11 @@ class DBConnection:
             self.cursor.execute(query)
         self.connection.commit()
 
-    def fetch(self, query):
-        self.cursor.execute(query)
+    def fetch(self, query, values=None):
+        if values:
+            self.cursor.execute(query, values)
+        else:
+            self.cursor.execute(query)
         return self.cursor.fetchall()
 
     def close(self):

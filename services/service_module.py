@@ -36,3 +36,12 @@ class ServiceModule:
             db.execute(query, (service_id,))
         finally:
             db.close()
+
+    def get_service_stats(self):
+        db = DBConnection()
+        try:
+            total_services = db.fetch("SELECT COUNT(*) FROM services")[0][0]
+            return total_services
+        finally:
+            db.close()
+

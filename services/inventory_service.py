@@ -30,3 +30,13 @@ class InventoryService:
             db.execute(query, (vehicle_id,))
         finally:
             db.close()
+
+    def get_vehicle_stats(self):
+        db = DBConnection()
+        try:
+            total = db.fetch("SELECT COUNT(*) FROM vehicles")[0][0]
+            available = db.fetch("SELECT COUNT(*) FROM vehicles WHERE status='Available'")[0][0]
+            return total, available
+        finally:
+            db.close()
+

@@ -6,6 +6,14 @@ from services.customer_service import CustomerService
 from models.vehicle import Vehicle
 from config.db_config import DBConnection
 
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.user_id = None
+
 
 # ---------- Load CSS ----------
 def load_css():
@@ -16,6 +24,86 @@ def load_css():
         st.warning("CSS file not found.")
 
 load_css()
+# ---------- Logout and Header ----------
+def render_header():
+    col1, col2 = st.columns([8,1])
+
+    with col1:
+        st.markdown(
+            f"<h3 style='color:#00c8ff;'>AutoNexus | Role: {st.session_state.role}</h3>",
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.session_state.role = None
+            st.rerun()
+
+# ---------- Back to Home ----------
+def back_button():
+    if st.button("⬅️ Back to Home"):
+        st.session_state.page = "Home"
+        st.rerun()
+
+# ---------- Auth ----------
+from services.auth_service import AuthService
+auth_service = AuthService()
+
+# ---------- Login ----------
+if not st.session_state.logged_in:
+    st.title("🔐 Login")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        user = auth_service.login(username, password)
+
+        if user:
+            st.session_state.logged_in = True
+            st.session_state.user_id = user[0]
+            st.session_state.role = user[1]
+            st.success("Login successful!")
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+    st.stop()
+
+# ---------- RBAC I ----------
+def has_access(feature):
+    role = st.session_state.role
+
+    permissions = {
+        "Admin": ["ALL"],
+
+    "Sales": [
+        "Dashboard",
+        "Sales",
+        "Sales History",
+        "Add Customer",
+        "Customers",
+        "View Inventory"
+    ],
+
+    "Technician": [
+        "Dashboard",
+        "Service Booking",
+        "Service Management",
+        "View Inventory"
+    ]
+    }
+
+    allowed = permissions.get(role, [])
+
+    return "ALL" in allowed or feature in allowed
+
+# ---------- RBAC II ----------
+def require_access(feature):
+    if not has_access(feature):
+        st.error("⛔ Access Denied")
+        st.stop()
 
 # ---------- Initialize Services ----------
 sales_service = SalesService()
@@ -23,16 +111,51 @@ service_module = ServiceModule()
 inventory_service = InventoryService()
 customer_service = CustomerService()
 
-# ---------- UI Header ----------
-st.title("🚗 AutoNexus Dashboard")
 
-menu = ["Add Vehicle", "Add Customer", "View Inventory", "Sales", "Service Booking", "Service Management", "Sales History", "Customers"]
-choice = st.sidebar.selectbox("Menu", menu)
 
-# =========================================================
-# ADD VEHICLE
-# =========================================================
+# ---------- HOME ----------
+if st.session_state.page == "Home":
+
+    render_header()
+
+    st.markdown("<h1 style='text-align:center; color:#00c8ff;'>🚗 AutoNexus</h1>", unsafe_allow_html=True)
+
+    def nav_button(label):
+        if st.button(label, use_container_width=True):
+            st.session_state.page = label
+            st.rerun()
+
+    # 🔥 Define all features (order matters)
+    features = [
+        "Dashboard",
+        "Add Vehicle",
+        "View Inventory",
+        "Sales",
+        "Service Booking",
+        "Service Management",
+        "Add Customer",
+        "Sales History",
+        "Customers"
+    ]
+
+    # 🔥 Filter based on RBAC
+    allowed_features = [f for f in features if has_access(f)]
+
+    # 🔥 Dynamic grid (3 columns)
+    cols = st.columns(3)
+
+    for i, feature in enumerate(allowed_features):
+        with cols[i % 3]:
+            nav_button(feature)
+
+choice = st.session_state.page
+
+# ---------- Add Vehicle ----------
 if choice == "Add Vehicle":
+    require_access("Add Vehicle")
+    render_header()
+    back_button()
+
     st.subheader("Add New Vehicle")
 
     vin = st.text_input("VIN")
@@ -51,10 +174,11 @@ if choice == "Add Vehicle":
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# =========================================================
-# VIEW INVENTORY
-# =========================================================
+# ---------- View Inventory ----------
 elif choice == "View Inventory":
+    require_access("View Inventory")
+    render_header()
+    back_button()
     st.subheader("Vehicle Inventory")
 
     try:
@@ -91,10 +215,11 @@ elif choice == "View Inventory":
     except Exception as e:
         st.error(f"Error fetching data: {e}")
 
-# =========================================================
-# SALES MODULE
-# =========================================================
+# ---------- Sales ----------
 elif choice == "Sales":
+    require_access("Sales")
+    render_header()
+    back_button()
     st.subheader("Process Sale")
 
     try:
@@ -138,10 +263,11 @@ elif choice == "Sales":
     except Exception as e:
         st.error(f"Sales Error: {e}")
 
-# =========================================================
-# SERVICE BOOKING
-# =========================================================
+# ---------- Service Book ----------
 elif choice == "Service Booking":
+    require_access("Service Booking")
+    render_header()
+    back_button()
     st.subheader("Book a Service")
 
     try:
@@ -179,10 +305,11 @@ elif choice == "Service Booking":
     except Exception as e:
         st.error(f"Service Error: {e}")
 
-# =========================================================
-# SERVICE MANAGEMENT
-# =========================================================
+# ---------- Service Manage ----------
 elif choice == "Service Management":
+    require_access("Service Management")
+    render_header()
+    back_button()
     st.subheader("Manage Services")
 
     try:
@@ -232,10 +359,11 @@ elif choice == "Service Management":
     except Exception as e:
         st.error(f"Error: {e}")
 
-# =========================================================
-# ADD CUSTOMER
-# =========================================================
+# ---------- Add Cust ----------
 elif choice == "Add Customer":
+    require_access("Add Customer")
+    render_header()
+    back_button()
     st.subheader("Add New Customer")
 
     name = st.text_input("Customer Name")
@@ -258,10 +386,11 @@ elif choice == "Add Customer":
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# =========================================================
-# SALES HISTORY
-# =========================================================
+# ---------- Sales History ----------
 elif choice == "Sales History":
+    require_access("Sales History")
+    render_header()
+    back_button()
     st.subheader("Sales History")
 
     try:
@@ -287,10 +416,12 @@ elif choice == "Sales History":
     except Exception as e:
         st.error(f"Error: {e}")
 
-# =========================================================
-# CUSTOMER MANAGEMENT
-# =========================================================
+# ---------- Cust Management ----------
 elif choice == "Customers":
+
+    require_access("Customers")
+    render_header()
+    back_button()
     st.subheader("Customer Management")
 
     try:
@@ -325,3 +456,46 @@ elif choice == "Customers":
 
     except Exception as e:
         st.error(f"Error: {e}")
+
+# ---------- DASHBOARD ----------
+elif choice == "Dashboard":
+    require_access("Dashboard")
+    render_header()
+    back_button()
+
+    st.markdown("<h2 style='color:#00c8ff;'>📊 Dashboard</h2>", unsafe_allow_html=True)
+
+    # 🔥 Fetch stats
+    total_vehicles, available = inventory_service.get_vehicle_stats()
+    total_sales, revenue = sales_service.get_sales_stats()
+    total_services = service_module.get_service_stats()
+
+    # 🔥 Metrics Row
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("🚗 Vehicles", total_vehicles)
+    col2.metric("✅ Available", available)
+    col3.metric("💰 Sales", total_sales)
+    col4.metric("🛠️ Services", total_services)
+
+    st.markdown("---")
+
+    st.metric("💵 Total Revenue", f"₹{revenue:,.2f}")
+
+    st.markdown("---")
+
+    import pandas as pd
+
+    db = DBConnection()
+    data = db.fetch("""
+        SELECT DATE(date), SUM(price)
+        FROM sales
+        GROUP BY DATE(date)
+    """)
+    db.close()
+
+    if data:
+        df = pd.DataFrame(data, columns=["Date", "Revenue"])
+        st.line_chart(df.set_index("Date"))
+    else:
+        st.info("No sales data to display.")

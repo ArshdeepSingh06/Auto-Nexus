@@ -57,3 +57,13 @@ class SalesService:
             db.execute(query, (sale_id,))
         finally:
             db.close()
+    
+    def get_sales_stats(self):
+        db = DBConnection()
+        try:
+            total_sales = db.fetch("SELECT COUNT(*) FROM sales")[0][0]
+            total_revenue = db.fetch("SELECT IFNULL(SUM(price),0) FROM sales")[0][0]
+            return total_sales, total_revenue
+        finally:
+            db.close()
+
