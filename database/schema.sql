@@ -44,6 +44,32 @@ CREATE TABLE users (
     role VARCHAR(20)
 );
 
+CREATE TABLE rentals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT,
+    customer_id INT,
+    start_date DATE,
+    end_date DATE,
+    status VARCHAR(20)
+);
+
+CREATE TABLE service_jobs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT,
+    customer_id INT,
+    type VARCHAR(50),
+    status VARCHAR(20),
+    cost FLOAT
+);
+
+CREATE TABLE invoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ref_id INT,
+    type VARCHAR(20),
+    amount FLOAT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT INTO users (username, password, role) VALUES
 ('admin', 'admin123', 'Admin'),
 ('sales', 'sales123', 'Sales'),
